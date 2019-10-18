@@ -32,11 +32,11 @@ Find details regarding the ```options``` object schema below. Default values spe
 
 **Optional**
 
- - ```project: string``` &ndash; *default:* ```"_"``` &ndash; The target projects name in Directus.
- - ```targetStatuses: string[] | void``` &ndash; *De6fault:* ```["published", "__NONE__"]``` &ndash; A set of allowed statuses records must match to be included in the mesh. A value of ```null``` or ```undefined``` includes content of any status. The string ```"__NONE__"``` can be used to allow records with no status defined.
- - ```typePrefix: string``` &ndash; *Default:* ```"Directus"``` &ndash; The prefix to use for the node types exposed in the GraphQL layer.
- - ```includeJunctions: boolean``` &ndash; *Default:* ```false``` &ndash; Allows inclusion of the junction tables that manage M2M relations in the GraphQL layer.
- - ```downloadFiles: boolean``` &ndash; *Default:* ```true``` &ndash; Indicates if files should be downloaded to disk. Enables images to be used with other transform plugins. Setting to false could be useful if the project has many files.
+ - ```project: string``` &ndash; **Default:** ```"_"``` &ndash; The target projects name in Directus.
+ - ```targetStatuses: string[] | void``` &ndash; **Default:** ```["published", "__NONE__"]``` &ndash; A set of allowed statuses records must match to be included in the mesh. A value of ```null``` or ```undefined``` includes content of any status. The string ```"__NONE__"``` can be used to allow records with no status defined.
+ - ```typePrefix: string``` &ndash; **Default:** ```"Directus"``` &ndash; The prefix to use for the node types exposed in the GraphQL layer.
+ - ```includeJunctions: boolean``` &ndash; **Default:** ```false``` &ndash; Allows inclusion of the junction tables that manage M2M relations in the GraphQL layer.
+ - ```downloadFiles: boolean``` &ndash; **Default:** ```true``` &ndash; Indicates if files should be downloaded to disk. Enables images to be used with other transform plugins. Setting to false could be useful if the project has many files.
  - ```customRecordFilter: (record: any, collection: string) => boolean``` &ndash; A function executed for each record, returning whether the record should be included in the content mesh. **Note:** If provided, this will **override** any ```targetStatuses``` value.
 
 ### Example Configuration
