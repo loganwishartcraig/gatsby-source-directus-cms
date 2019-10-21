@@ -8,6 +8,16 @@
     "build": "tsc",
     "dev": "tsc --watch"
   },
+  "keywords": [
+    "gatsby",
+    "gatsby-plugin",
+    "gatsby-source",
+    "gatsby-source-plugin",
+    "gatsby-source-directus",
+    "gatsby-directus",
+    "directus",
+    "directus-cms"
+  ],
   "author": "Logan Wishart-Craig",
   "license": "MIT",
   "dependencies": {
