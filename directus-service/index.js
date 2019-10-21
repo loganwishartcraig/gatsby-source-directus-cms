@@ -19,10 +19,6 @@ class DirectusService {
         this._fileCollectionName = 'directus_files';
         this._targetStatuses = ['published', DirectusService._voidStatusKey];
         this._includeInternalCollections = false;
-        this._url = config.url;
-        this._project = config.project || '';
-        this._email = config.email;
-        this._password = config.password;
         if (config.fileCollectionName) {
             this._fileCollectionName = config.fileCollectionName;
         }
@@ -32,27 +28,57 @@ class DirectusService {
         if (typeof config.customRecordFilter === 'function') {
             this._customRecordFilter = config.customRecordFilter;
         }
-        this._api = new sdk_js_1.default({
-            url: this._url,
-            project: this._project
+        this._allowCollections = config.allowCollections;
+        this._blockCollections = config.blockCollections;
+        this._api = this._initSDK(config);
+        this._ready = this._initAuth(config);
+    }
+    _initSDK({ url, project, auth = {} }) {
+        const config = {
+            url,
+            project,
+        };
+        if (auth.token) {
+            config.token = auth.token;
+            config.persist = true;
+        }
+        return new sdk_js_1.default(config);
+    }
+    _initAuth({ auth: { token, email, password } = {} }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (token) {
+                return;
+            }
+            else if (email && password) {
+                return this._login({ email, password });
+            }
+            utils_1.log.warn('No authentication details provided. Will try using the public API...');
         });
     }
-    _login() {
+    _login(credentials) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const response = yield this._api.login({
-                    email: this._email,
-                    password: this._password
-                });
-                if (!response || !response.token) {
-                    throw new Error('Invalid response returned.');
+                if (!this._api.loggedIn) {
+                    const response = yield this._api.login(credentials, { persist: true, storage: true });
+                    if (!response || !response.token) {
+                        throw new Error('Invalid response returned.');
+                    }
+                    utils_1.log.success('Authentication successful.');
                 }
-                utils_1.log.success('Authentication successful.');
             }
             catch (e) {
-                utils_1.log.warn('Failed to login to Directus, will try using the public API...');
+                utils_1.log.warn('Failed to login into Directus using the credentials provided. Will try using the public API...');
             }
         });
+    }
+    _shouldIncludeCollection(collection, managed) {
+        if (this._allowCollections && !this._allowCollections.includes(collection)) {
+            return false;
+        }
+        else if (this._blockCollections && this._blockCollections.includes(collection)) {
+            return false;
+        }
+        return this._includeInternalCollections || managed;
     }
     _shouldIncludeRecord(record, collection) {
         const { status } = record;
@@ -68,9 +94,6 @@ class DirectusService {
     init() {
         return __awaiter(this, void 0, void 0, function* () {
             utils_1.log.info('Initializing Directus Service...');
-            if (!this._ready) {
-                this._ready = this._login();
-            }
             yield this._ready;
         });
     }
@@ -112,7 +135,7 @@ class DirectusService {
                 utils_1.log.info('Fetching all collections...');
                 // Currently we don't consider non-managed Directus tables.
                 const { data: collections } = yield this._api.getCollections();
-                return collections.filter(({ managed }) => this._includeInternalCollections || managed);
+                return collections.filter(({ collection, managed }) => this._shouldIncludeCollection(collection, managed));
             }
             catch (e) {
                 utils_1.log.error('Failed to fetch collections');

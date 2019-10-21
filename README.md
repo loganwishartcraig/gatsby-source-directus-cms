@@ -22,18 +22,27 @@ Installing the plugin is no different than installing other Gatsby source plugin
 
 ### Options
 
-Find details regarding the ```options``` object schema below. Default values specified when used.
+Find details regarding the ```options``` object schema below.
 
 **Required**
 
  - ```url: string``` &ndash; The base url for the project's Directus API.
- - ```email: string``` &ndash; Directus login email.This user should have ```read``` access to all tables, including system tables.
- - ```password: string```  &ndash; Directus login password.
+
+**Authentication**
+
+You can authenticate using _either_ login credentials, or a pre-generated token. Either way, ```READ``` access to all tables, including system tables, should be granted. If both are provided, the token is preferred. If neither are provided, the public API is used.
+
+- ```auth: { email: string; password: string; }``` &ndash; The login credentials for the user to authenticate the Directus API with.
+- ```auth: { token: string; }``` &ndash; A token used to authenticate with the Directus API.
 
 **Optional**
 
+Default values are ```void``` unless otherwise specified.
+
  - ```project: string``` &ndash; *Default:* ```"_"``` &ndash; The target projects name in Directus.
  - ```targetStatuses: string[] | void``` &ndash; *Default:* ```["published", "__NONE__"]``` &ndash; A set of allowed statuses records must match to be included in the mesh. A value of ```null``` or ```undefined``` includes content of any status. The string ```"__NONE__"``` can be used to allow records with no status defined.
+ - ```allowCollections: string[] | void``` &ndash; A set of collection names to allow. Only collections with names that appear in the set will be included. ```void``` includes all collections.
+ - ```blockCollections: string[] | void``` &ndash; A set of collection names to block. Only collections with names that **don't** appear in the set will be included. ```void``` blocks no collections.
  - ```typePrefix: string``` &ndash; *Default:* ```"Directus"``` &ndash; The prefix to use for the node types exposed in the GraphQL layer.
  - ```includeJunctions: boolean``` &ndash; *Default:* ```false``` &ndash; Allows inclusion of the junction tables that manage M2M relations in the GraphQL layer.
  - ```downloadFiles: boolean``` &ndash; *Default:* ```true``` &ndash; Indicates if files should be downloaded to disk. Enables images to be used with other transform plugins. Setting to false could be useful if the project has many files.
@@ -53,9 +62,11 @@ module.exports = {
                 options: {
                     url: 'https://directus.example.com',
                     project: '_',
-                    email: 'admin@example.com',
-                    password: 'example',
-                    targetStatuses:['published', 'draft', '__NONE__'],
+                    auth: {
+                        email: 'admin@example.com',
+                        password: 'example',
+                    },
+                    targetStatuses: ['published', 'draft', '__NONE__'],
                     downloadFiles: false,
                 },
             // ...
@@ -70,6 +81,12 @@ module.exports = {
 ### Directus Config
 
 Setting up a separate user in Directus for usage with this plugin is recommended. Make sure you grant ```read``` privileges to the user on all tables, including system tables. See more in the [Directus docs](https://docs.directus.io/guides/permissions.html#collection-level).
+
+### Known Limitations
+
+For the a collection type to exist in the GraphQL layer, there must be at least one record processed by the plugin belonging to the collection.
+
+E.g. if either no records exist for the collection, or they are all filtered by the plugin configuration, that collection will **not** appear in the GraphQL layer, and any attempts to query against it will throw an error.
 
 ### Development
 

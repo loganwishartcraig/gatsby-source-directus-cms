@@ -3,14 +3,24 @@ import { IFile } from "@directus/sdk-js/dist/types/schemes/directus/File";
 import { log } from "../utils";
 import { ICollection } from "@directus/sdk-js/dist/types/schemes/directus/Collection";
 import { ICollectionResponse } from "@directus/sdk-js/dist/types/schemes/response/Collection";
+import { IConfigurationOptions } from '@directus/sdk-js/dist/types/Configuration';
 
 export interface DirectusServiceConfig {
     url: string;
-    email: string;
-    password: string;
+
+    auth?: {
+        email?: string;
+        password?: string;
+        token?: string;
+    }
+
     project?: string;
     fileCollectionName?: string;
     targetStatuses?: string[] | void;
+
+    allowCollections?: string[] | void;
+    blockCollections?: string[] | void;
+
     customRecordFilter?: (record: any, collection: string) => boolean;
 }
 
@@ -18,24 +28,18 @@ export class DirectusService {
 
     private static _voidStatusKey: string = '__NONE__';
 
-    private _url: string;
-    private _project: string;
-    private _email: string;
-    private _password: string;
     private _fileCollectionName: string = 'directus_files';
     private _targetStatuses: string[] | void = ['published', DirectusService._voidStatusKey];
     private _includeInternalCollections: boolean = false;
     private _customRecordFilter?: (record: any, collection: string) => boolean;
 
+    private _allowCollections: string[] | void;
+    private _blockCollections: string[] | void;
+
     private _api: DirectusSDK;
     private _ready: Promise<void>;
 
     constructor(config: DirectusServiceConfig) {
-
-        this._url = config.url;
-        this._project = config.project || '';
-        this._email = config.email;
-        this._password = config.password;
 
         if (config.fileCollectionName) {
             this._fileCollectionName = config.fileCollectionName;
@@ -49,31 +53,79 @@ export class DirectusService {
             this._customRecordFilter = config.customRecordFilter;
         }
 
-        this._api = new DirectusSDK({
-            url: this._url,
-            project: this._project
-        });
+        this._allowCollections = config.allowCollections;
+        this._blockCollections = config.blockCollections;
+
+        this._api = this._initSDK(config);
+        this._ready = this._initAuth(config);
 
     }
 
-    private async _login(): Promise<void> {
+    private _initSDK({
+        url,
+        project,
+        auth = {}
+    }: DirectusServiceConfig): DirectusSDK {
+
+        const config: IConfigurationOptions = {
+            url,
+            project,
+        };
+
+        if (auth.token) {
+            config.token = auth.token;
+            config.persist = true;
+        }
+
+        return new DirectusSDK(config);
+    }
+
+    private async _initAuth({ auth: { token, email, password } = {} }: DirectusServiceConfig): Promise<void> {
+
+        if (token) {
+            return;
+        } else if (email && password) {
+            return this._login({ email, password })
+        }
+
+        log.warn('No authentication details provided. Will try using the public API...');
+
+    }
+
+
+    private async _login(credentials: { email: string; password: string }): Promise<void> {
 
         try {
 
-            const response = await this._api.login({
-                email: this._email,
-                password: this._password
-            });
+            if (!this._api.loggedIn) {
 
-            if (!response || !response.token) {
-                throw new Error('Invalid response returned.');
+                const response = await this._api.login(credentials, { persist: true, storage: true });
+
+                if (!response || !response.token) {
+                    throw new Error('Invalid response returned.');
+                }
+
+                log.success('Authentication successful.')
+
             }
 
-            log.success('Authentication successful.')
 
         } catch (e) {
-            log.warn('Failed to login to Directus, will try using the public API...');
+            log.warn('Failed to login into Directus using the credentials provided. Will try using the public API...');
         }
+
+    }
+
+    private _shouldIncludeCollection(collection: string, managed: boolean): boolean {
+
+        if (this._allowCollections && !this._allowCollections.includes(collection)) {
+            return false;
+        } else if (this._blockCollections && this._blockCollections.includes(collection)) {
+            return false;
+        }
+
+        return this._includeInternalCollections || managed;
+
 
     }
 
@@ -96,10 +148,6 @@ export class DirectusService {
     public async init(): Promise<void> {
 
         log.info('Initializing Directus Service...');
-
-        if (!this._ready) {
-            this._ready = this._login();
-        }
 
         await this._ready;
 
@@ -156,7 +204,7 @@ export class DirectusService {
             // Currently we don't consider non-managed Directus tables.
             const { data: collections } = await this._api.getCollections() as any;
 
-            return collections.filter(({ managed }) => this._includeInternalCollections || managed);
+            return collections.filter(({ collection, managed }) => this._shouldIncludeCollection(collection, managed));
 
         } catch (e) {
             log.error('Failed to fetch collections');
