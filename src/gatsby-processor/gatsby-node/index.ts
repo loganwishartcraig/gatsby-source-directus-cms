@@ -1,84 +1,99 @@
-import { GatsbyRecord } from "../gatsby-record";
-import Pluralize from 'pluralize';
-import { ContentCollection } from "../../content-mesh";
+import { ContentNode } from "../../content-mesh";
+import { GatsbyType } from "../gatsby-type";
 import { GatsbyProcessor } from "..";
-import { createRemoteFileNode } from 'gatsby-source-filesystem';
+import { createRemoteFileNode } from "gatsby-source-filesystem";
 import { log } from "../../utils";
 
 export class GatsbyNode {
 
-    private _nodes: GatsbyRecord[];
-    private _name: string;
-    private _collection: ContentCollection;
+    protected _node: ContentNode;
+    protected _processor: GatsbyProcessor;
 
-    private _processor: GatsbyProcessor;
-
-    constructor(collection: ContentCollection, processor: GatsbyProcessor) {
+    constructor(node: ContentNode, processor: GatsbyProcessor) {
+        this._node = node;
         this._processor = processor;
-        this._collection = collection;
-        this._name = GatsbyNode.getNodeName(collection);
-        this._nodes = collection.getNodes().map(node => new GatsbyRecord(node, processor));
     }
 
-    public static getNodeName({ name }: ContentCollection): string {
+    public getIds(node: ContentNode | ContentNode[]): string | string[] {
 
-        const singularName = Pluralize.isPlural(name) ? Pluralize.singular(name) : name;
-        const strippedName = name.match(/^directus/) ? singularName.replace('directus', '') : singularName;
-
-        return `${strippedName[0].toUpperCase()}${strippedName.slice(1)}`
-    }
-
-    private async _buildFileNodes(): Promise<any[]> {
-
-        const generator = this._processor.createNodeFactory(this._name);
-
-        const baseConfig = {
-            store: this._processor.gatsby.store,
-            cache: this._processor.gatsby.cache,
-            createNode: this._processor.gatsby.actions.createNode,
-            createNodeId: this._processor.gatsby.createNodeId,
-            reporter: undefined
-        };
-
-        const allNodes = await Promise.all(this._nodes.map(node => {
-
-            const localNode = node.toJSON();
-
-            return createRemoteFileNode({
-                ...baseConfig,
-                url: localNode.data.full_url,
-            }).then(remoteNode => {
-                localNode.localFile___NODE = (remoteNode as any).id;
-            }).catch(e => {
-                log.error(`Failed to download remote file: ${localNode.data.full_url}`);
-                log.error('File will not be available through transforms.')
-            }).then(() => generator(localNode));
-
-        }));
-
-        return allNodes;
-
-    }
-
-    private _buildNormalNodes(): any[] {
-
-        const generator = this._processor.createNodeFactory(this._name);
-
-        return this._nodes.map(node => generator(node.toJSON()));
-    }
-
-    public async buildNodes(): Promise<any[]> {
-
-        if (this._collection.isFileCollection && this._processor.downloadFiles) {
-            return this._buildFileNodes();
-        } else {
-            return this._buildNormalNodes();
+        if (Array.isArray(node)) {
+            return node.map(node => this._resolveId(node));
         }
 
+        return this._resolveId(node);
+
     }
 
-    public get name(): string {
-        return this._name;
+    private _resolveId(node: ContentNode): string {
+        return this._processor.generateNodeId(GatsbyType.getTypeName(node.getCollection()), node.primaryKey);
+    }
+
+    private static _formatFieldName(field: string): string {
+        return `${field}___NODE`;
+    }
+
+    private _mixinRelations(contents: any): any {
+
+        return Object
+            .entries(this._node.getRelations())
+            .reduce((newContents, [field, relation]) => {
+
+                delete newContents[field];
+
+                const newFieldName = GatsbyNode._formatFieldName(field);
+                newContents[newFieldName] = this.getIds(relation.getRelatedNodes());
+
+                return newContents;
+
+            }, { ...contents });
+
+    }
+
+    public async build(): Promise<any> {
+
+        // Ensure ID field is set to the primary key.
+        const contents = {
+            ...this._node.contents,
+            id: this._node.primaryKey
+        };
+
+        if (this._node.getCollection().acceptsRelations()) {
+            return this._mixinRelations(contents);
+        }
+
+        return contents;
+
+    }
+
+}
+
+
+export class GatsbyFileNode extends GatsbyNode {
+
+    public async build(): Promise<any> {
+
+        const localNode = await super.build();
+
+        try {
+
+            const remoteNode = await createRemoteFileNode({
+                store: this._processor.gatsby.store,
+                cache: this._processor.gatsby.cache,
+                createNode: this._processor.gatsby.actions.createNode,
+                createNodeId: this._processor.gatsby.createNodeId,
+                reporter: undefined,
+                url: localNode.data.full_url,
+            });
+
+            localNode.localFile___NODE = (remoteNode as any).id;
+
+        } catch (e) {
+            log.error(`Failed to download remote file: ${localNode.data.full_url}`);
+            log.error('File will not be available through transforms.')
+        }
+
+        return localNode;
+
     }
 
 }

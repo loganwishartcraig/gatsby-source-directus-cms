@@ -30,11 +30,7 @@ export const sourceNodes = async (
         });
 
         const processor = new GatsbyProcessor(config, gatsby);
-        const nodes = await processor.processMesh(contentMesh);
-
-        await Promise.all(nodes.map(node => (
-            gatsby.actions.createNode(node)
-        )));
+        await processor.processMesh(contentMesh);
 
         log.success('Processing complete');
 

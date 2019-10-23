@@ -1,6 +1,6 @@
 import createNodeHelpers from 'gatsby-node-helpers'
 import { ContentMesh } from '../content-mesh';
-import { GatsbyNode } from './gatsby-node';
+import { GatsbyType } from './gatsby-type';
 
 export interface GatsbyProcessorConfig {
     typePrefix?: string;
@@ -47,9 +47,11 @@ export class GatsbyProcessor {
 
         const nodes = await Promise.all(mesh.getCollections()
             .filter(({ isJunction }) => !isJunction || this._includeJunctions)
-            .map(collection => new GatsbyNode(collection, this).buildNodes()))
+            .map(collection => new GatsbyType(collection, this).buildNodes()))
 
-        return nodes.flat();
+        return Promise.all(nodes.flat().map(node => (
+            this.gatsby.actions.createNode(node)
+        )));
 
     }
 

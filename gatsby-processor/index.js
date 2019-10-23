@@ -1,10 +1,9 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -13,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const gatsby_node_helpers_1 = __importDefault(require("gatsby-node-helpers"));
-const gatsby_node_1 = require("./gatsby-node");
+const gatsby_type_1 = require("./gatsby-type");
 class GatsbyProcessor {
     constructor(config, gatsby) {
         this._typePrefix = 'Directus';
@@ -39,8 +38,8 @@ class GatsbyProcessor {
         return __awaiter(this, void 0, void 0, function* () {
             const nodes = yield Promise.all(mesh.getCollections()
                 .filter(({ isJunction }) => !isJunction || this._includeJunctions)
-                .map(collection => new gatsby_node_1.GatsbyNode(collection, this).buildNodes()));
-            return nodes.flat();
+                .map(collection => new gatsby_type_1.GatsbyType(collection, this).buildNodes()));
+            return Promise.all(nodes.flat().map(node => (this.gatsby.actions.createNode(node))));
         });
     }
     get downloadFiles() {
