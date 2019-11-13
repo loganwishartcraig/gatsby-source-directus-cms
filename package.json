@@ -18,6 +18,7 @@
     "directus",
     "directus-cms"
   ],
+  "homepage": "https://github.com/loganwishartcraig/gatsby-source-directus-cms",
   "author": "Logan Wishart-Craig",
   "license": "MIT",
   "dependencies": {
