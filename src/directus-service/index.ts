@@ -97,9 +97,9 @@ export class DirectusService {
 
         try {
 
-            if (!(await this._api.isLoggedIn())) {
+            if (!this._api.config.token) {
 
-                const response = await this._api.login(credentials, { persist: true, storage: true, mode: "jwt" });
+                const response = await this._api.login(credentials, { mode: 'jwt', persist: true, storage: true });
 
                 if (!response || !response.data.token) {
                     throw new Error('Invalid response returned.');
