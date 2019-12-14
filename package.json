@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-directus-cms",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Gatsby source plugin to load nodes into the content mesh via Directus.",
   "main": "./gatsby-node.js",
   "scripts": {
@@ -21,13 +21,13 @@
   "author": "Logan Wishart-Craig",
   "license": "MIT",
   "dependencies": {
-    "@directus/sdk-js": "^6.0.0-alpha.2",
+    "@directus/sdk-js": "^6.0.0",
     "colors": "^1.4.0",
     "gatsby-node-helpers": "^0.3.0",
-    "gatsby-source-filesystem": "^2.1.33",
+    "gatsby-source-filesystem": "^2.1.42",
     "pluralize": "^8.0.0"
   },
   "devDependencies": {
-    "typescript": "^3.6.3"
+    "typescript": "^3.7.3"
   }
 }

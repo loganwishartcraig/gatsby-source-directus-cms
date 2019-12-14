@@ -97,11 +97,11 @@ export class DirectusService {
 
         try {
 
-            if (!this._api.loggedIn) {
+            if (!(await this._api.isLoggedIn())) {
 
-                const response = await this._api.login(credentials, { persist: true, storage: true });
+                const response = await this._api.login(credentials, { persist: true, storage: true, mode: "jwt" });
 
-                if (!response || !response.token) {
+                if (!response || !response.data.token) {
                     throw new Error('Invalid response returned.');
                 }
 
@@ -202,7 +202,7 @@ export class DirectusService {
             log.info('Fetching all collections...');
 
             // Currently we don't consider non-managed Directus tables.
-            const { data: collections } = await this._api.getCollections() as any;
+            const { data: collections = [] } = await this._api.getCollections() as any;
 
             return collections.filter(({ collection, managed }) => this._shouldIncludeCollection(collection, managed));
 
@@ -219,7 +219,7 @@ export class DirectusService {
 
             log.info('Fetching all relations...');
 
-            const { data: relations } = await this._api.getRelations();
+            const { data: relations = [] } = await this._api.getRelations();
 
             return relations;
 
@@ -238,7 +238,7 @@ export class DirectusService {
 
             log.info(`Fetching records for ${collection}...`);
 
-            const { data: items } = await this._api.getItems(collection, {
+            const { data: items = [] } = await this._api.getItems(collection, {
                 fields: '*.*'
             });
 
@@ -259,10 +259,10 @@ export class DirectusService {
         return Promise.all(
             collections.map(
                 ({ collection }) => this.getCollectionRecords(collection)
-            )).then(recordSets => {
+            )).then((recordSets = []) => {
 
                 return recordSets.reduce((recordMap, records, i) => {
-                    recordMap[collections[i].collection] = records;
+                    recordMap[collections[i].collection] = records || [];
                     return recordMap;
                 }, {} as { [collection: string]: any[] });
 
@@ -276,7 +276,7 @@ export class DirectusService {
 
             log.info('Fetching all files...');
 
-            const { data } = await this._api.getFiles();
+            const { data = [] } = await this._api.getFiles();
 
             return data.flat();
 

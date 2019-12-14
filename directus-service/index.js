@@ -58,9 +58,9 @@ class DirectusService {
     _login(credentials) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                if (!this._api.loggedIn) {
-                    const response = yield this._api.login(credentials, { persist: true, storage: true });
-                    if (!response || !response.token) {
+                if (!(yield this._api.isLoggedIn())) {
+                    const response = yield this._api.login(credentials, { persist: true, storage: true, mode: "jwt" });
+                    if (!response || !response.data.token) {
                         throw new Error('Invalid response returned.');
                     }
                     utils_1.log.success('Authentication successful.');
@@ -134,7 +134,7 @@ class DirectusService {
             try {
                 utils_1.log.info('Fetching all collections...');
                 // Currently we don't consider non-managed Directus tables.
-                const { data: collections } = yield this._api.getCollections();
+                const { data: collections = [] } = yield this._api.getCollections();
                 return collections.filter(({ collection, managed }) => this._shouldIncludeCollection(collection, managed));
             }
             catch (e) {
@@ -147,7 +147,7 @@ class DirectusService {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 utils_1.log.info('Fetching all relations...');
-                const { data: relations } = yield this._api.getRelations();
+                const { data: relations = [] } = yield this._api.getRelations();
                 return relations;
             }
             catch (e) {
@@ -160,7 +160,7 @@ class DirectusService {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 utils_1.log.info(`Fetching records for ${collection}...`);
-                const { data: items } = yield this._api.getItems(collection, {
+                const { data: items = [] } = yield this._api.getItems(collection, {
                     fields: '*.*'
                 });
                 return items.filter(record => this._shouldIncludeRecord(record, collection));
@@ -174,9 +174,9 @@ class DirectusService {
     }
     batchGetCollectionRecords(collections) {
         utils_1.log.info('Fetching all records...');
-        return Promise.all(collections.map(({ collection }) => this.getCollectionRecords(collection))).then(recordSets => {
+        return Promise.all(collections.map(({ collection }) => this.getCollectionRecords(collection))).then((recordSets = []) => {
             return recordSets.reduce((recordMap, records, i) => {
-                recordMap[collections[i].collection] = records;
+                recordMap[collections[i].collection] = records || [];
                 return recordMap;
             }, {});
         });
@@ -185,7 +185,7 @@ class DirectusService {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 utils_1.log.info('Fetching all files...');
-                const { data } = yield this._api.getFiles();
+                const { data = [] } = yield this._api.getFiles();
                 return data.flat();
             }
             catch (e) {
