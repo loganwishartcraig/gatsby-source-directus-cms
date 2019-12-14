@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -59,7 +60,7 @@ class DirectusService {
             try {
                 if (!this._api.config.token) {
                     const response = yield this._api.login(credentials, { mode: 'jwt', persist: true, storage: true });
-                    if (!response || !response.token) {
+                    if (!response || !response.data.token) {
                         throw new Error('Invalid response returned.');
                     }
                     utils_1.log.success('Authentication successful.');
@@ -195,5 +196,5 @@ class DirectusService {
         });
     }
 }
-DirectusService._voidStatusKey = '__NONE__';
 exports.DirectusService = DirectusService;
+DirectusService._voidStatusKey = '__NONE__';
