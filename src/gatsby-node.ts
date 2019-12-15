@@ -1,3 +1,4 @@
+import 'array-flat-polyfill';
 import { ContentMesh } from './content-mesh';
 import { log } from './utils';
 import { DirectusServiceConfig, DirectusService } from './directus-service';
