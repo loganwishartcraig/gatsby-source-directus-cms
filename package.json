@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-directus-cms",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A Gatsby source plugin to load nodes into the content mesh via Directus.",
   "main": "./gatsby-node.js",
   "scripts": {
