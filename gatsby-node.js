@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+require("array-flat-polyfill");
 const content_mesh_1 = require("./content-mesh");
 const utils_1 = require("./utils");
 const directus_service_1 = require("./directus-service");
