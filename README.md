@@ -26,7 +26,7 @@ Find details regarding the ```options``` object schema below.
 
  | Field | Type |  Default | Note |
  | ----- | ---- | -------- | ----- |
- | url | ```string``` | ```void``` | **Required* - The base url for the project's Directus API. |
+ | url | ```string``` | ```void``` | **Required** - The base url for the project's Directus API. |
  | auth | ```{ email: string; password: string; } \| { token: string; }``` | ```void``` | Either the login credentials for the user to authenticate the Directus API with, OR a token used to authenticate with the Directus API. If both are provided, the token is preferred. If neither are provided, the public API is used. |
  | project | ```string``` | ```"_"``` | The target projects name in Directus. |
  | targetStatuses | ```string[] \| void``` | ```"published", "__NONE__"]``` | A set of allowed statuses records must match to be included in the mesh. A value of ```null``` or ```undefined``` includes content of any status. The string ```"__NONE__"``` can be used to allow records with no status defined. |
