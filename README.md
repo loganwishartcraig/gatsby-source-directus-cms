@@ -1,3 +1,7 @@
+# ⚠️ Warning: This Project is Deprecated ⚠️
+
+This project was merged into the official [@directus/gatsby-source](https://github.com/directus/gatsby-source) plugin. Use that instead!
+
 # Gatsby Source Directus CMS
 
 A [Gatsby](https://www.gatsbyjs.org/) source plugin to pull content from a [Directus CMS](https://directus.io/) backend.

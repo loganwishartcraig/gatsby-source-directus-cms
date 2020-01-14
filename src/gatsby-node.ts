@@ -9,6 +9,10 @@ export const sourceNodes = async (
     config: DirectusServiceConfig & GatsbyProcessorConfig
 ) => {
 
+    log.warn(`The gatsby-source-directus-cms plugin is DEPRECATED.`);
+    log.warn(`Use the official @directus/gatsby-source plugin instead!`);
+    log.warn(`https://github.com/directus/gatsby-source`);
+
     log.info(`Starting...`);
     log.info(`Target: ${config.url}/${config.project}`);
 

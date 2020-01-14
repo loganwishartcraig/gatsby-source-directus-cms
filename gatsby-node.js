@@ -15,6 +15,9 @@ const utils_1 = require("./utils");
 const directus_service_1 = require("./directus-service");
 const gatsby_processor_1 = require("./gatsby-processor");
 exports.sourceNodes = (gatsby, config) => __awaiter(void 0, void 0, void 0, function* () {
+    utils_1.log.warn(`The gatsby-source-directus-cms plugin is DEPRECATED.`);
+    utils_1.log.warn(`Use the official @directus/gatsby-source plugin instead!`);
+    utils_1.log.warn(`https://github.com/directus/gatsby-source`);
     utils_1.log.info(`Starting...`);
     utils_1.log.info(`Target: ${config.url}/${config.project}`);
     const service = new directus_service_1.DirectusService(config);
